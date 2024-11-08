@@ -42,7 +42,7 @@ log_parser - Parse maillog file
 
 USAGE:
 
-    log_parser [OPTION ...] LOGFILE>
+    log_parser [OPTION ...] <MAIL LOGFILE>
 
 OPTIONS:
 
