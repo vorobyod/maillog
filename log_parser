@@ -3,15 +3,41 @@
 use strict;
 use warnings;
 use utf8;
-use encoding 'utf8';
 
+use Data::Dumper;
 use Getopt::Long;
 
-print_usage();
+use constant THREADS_NUM => 5;
+
+# Get options and the input log file
+my %options = ();
+my @required_options = qw(db_host db_user db_password db_name);
+GetOptions(\%options,
+    'threads=i',
+    'help',
+    'db_host=s',
+    'db_user=s',
+    'db_password=s',
+    'db_name=s'
+) or die "Error in command line arguments";
+
+# Process options
+if ($options{help}) {
+    print_usage();
+    exit(0);
+}
+$options{threads} //= THREADS_NUM;
+foreach my $opt_name (@required_options) {
+    script_fail("$opt_name required") unless ($options{$opt_name});
+}
+
+# Check for input maillog file
+script_fail("No log files specified") if (scalar(@ARGV) == 0);
+
+script_success();
 
 sub print_usage {
     print << 'USAGE_INFO';
-
 log_parser - Parse maillog file
 
 USAGE:
@@ -20,8 +46,8 @@ USAGE:
 
 OPTIONS:
 
-    --threads=<THREADS_MAX>
-        Max number of worker threads, default: 5
+    --threads=<THREADS_NUM>
+        A number of worker threads to run, default: 5
 
     --db_host=<DB_HOST>
         Target database hostname/IP-address
@@ -36,5 +62,17 @@ OPTIONS:
         Target database name
 
 USAGE_INFO
+}
+
+sub script_success {
+    print "DONE.\n";
+    exit(0);
+}
+
+sub script_fail {
+    my $error_msg = shift;
+    print "===> ERROR: $error_msg\n";
+    print_usage();
+    exit(1);
 }
 
