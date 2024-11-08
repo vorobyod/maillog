@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
+use Config::General;
 use Data::Dumper;
 use Getopt::Long;
 use Log::Log4perl;
@@ -11,9 +12,18 @@ use Log::Log4perl;
 use constant THREADS_NUM => 5;
 use constant DATASET_SIZE => 1000;
 
+our %ENV;
+
+# Determine home dir
+my $script_home_dir = $ENV{LOGPARSER_HOME} or
+    script_fail("LOGPARSER_HOME env variable is not set");
+
+# Read config file
+my $conf = Config::General->new("$script_home_dir/etc/logparser.conf");
+my %config = $conf->getall();
+
 # Get options and the input log file
 my %options = ();
-my @required_options = qw(db_host db_user db_password db_name);
 GetOptions(\%options,
     'threads=i',
     'dataset_size=i',
@@ -29,10 +39,25 @@ if ($options{help}) {
     print_usage();
     exit(0);
 }
-$options{threads} //= THREADS_NUM;
-$options{dataset_size} //= DATASET_SIZE;
-foreach my $opt_name (@required_options) {
-    script_fail("$opt_name required") unless ($options{$opt_name});
+
+# Override config values for any option provided
+foreach my $option (qw(threads dataset_size)) {
+    $config{'parser'}{$option} = $options{$option} if (exists $options{$option});
+}
+foreach my $option (grep('/^db_/', keys %options)) {
+    $config{'database'}{$option} = $options{$option};
+}
+
+# Validate config values
+foreach my $param (qw(threads dataset_size)) {
+    unless (exists $config{'parser'}{$param}) {
+        script_fail("please provide a value for parser/$param or set it as --${param}");
+    }
+}
+foreach my $param (qw(db_host db_user db_password db_name)) {
+    unless (exists $config{'database'}{$param}) {
+        script_fail("please provide a value for database/$param or set it as --${param}");
+    }
 }
 
 # Check for input maillog file
