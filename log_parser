@@ -38,6 +38,7 @@ foreach my $opt_name (@required_options) {
 script_fail("No input maillog file specified") if (scalar(@ARGV) == 0);
 my $maillog_file = shift;
 
+# We are DONE
 script_success();
 
 sub print_usage {
