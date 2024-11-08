@@ -35,7 +35,8 @@ foreach my $opt_name (@required_options) {
 }
 
 # Check for input maillog file
-script_fail("No log files specified") if (scalar(@ARGV) == 0);
+script_fail("No input maillog file specified") if (scalar(@ARGV) == 0);
+my $maillog_file = shift;
 
 script_success();
 
