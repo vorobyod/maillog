@@ -1,0 +1,40 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use utf8;
+use encoding 'utf8';
+
+use Getopt::Long;
+
+print_usage();
+
+sub print_usage {
+    print << 'USAGE_INFO';
+
+log_parser - Parse maillog file
+
+USAGE:
+
+    log_parser [OPTION ...] LOGFILE>
+
+OPTIONS:
+
+    --threads=<THREADS_MAX>
+        Max number of worker threads, default: 5
+
+    --db_host=<DB_HOST>
+        Target database hostname/IP-address
+
+    --db_user=<DB_USER>
+        DB connection username
+
+    --db_password=<DB_PASSWORD>
+        DB connection password
+
+    --db_name=<DB_NAME>
+        Target database name
+
+USAGE_INFO
+}
+
