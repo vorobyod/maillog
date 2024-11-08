@@ -6,6 +6,7 @@ use utf8;
 
 use Data::Dumper;
 use Getopt::Long;
+use Log::Log4perl;
 
 use constant THREADS_NUM => 5;
 use constant DATASET_SIZE => 1000;
