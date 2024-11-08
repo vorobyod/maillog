@@ -8,12 +8,14 @@ use Data::Dumper;
 use Getopt::Long;
 
 use constant THREADS_NUM => 5;
+use constant DATASET_SIZE => 1000;
 
 # Get options and the input log file
 my %options = ();
 my @required_options = qw(db_host db_user db_password db_name);
 GetOptions(\%options,
     'threads=i',
+    'dataset_size=i',
     'help',
     'db_host=s',
     'db_user=s',
@@ -27,6 +29,7 @@ if ($options{help}) {
     exit(0);
 }
 $options{threads} //= THREADS_NUM;
+$options{dataset_size} //= DATASET_SIZE;
 foreach my $opt_name (@required_options) {
     script_fail("$opt_name required") unless ($options{$opt_name});
 }
@@ -48,6 +51,10 @@ OPTIONS:
 
     --threads=<THREADS_NUM>
         A number of worker threads to run, default: 5
+
+    --dataset_size=<DATASET_SIZE>
+        The size of data that will be loaded from maillog for processing.
+        Default: 1000 records (lines)
 
     --db_host=<DB_HOST>
         Target database hostname/IP-address
