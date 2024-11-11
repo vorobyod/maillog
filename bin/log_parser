@@ -3,21 +3,23 @@
 use strict;
 use warnings;
 use utf8;
+use lib ($ENV{LOGPARSER_HOME}.'/lib');
+
+our(%ENV, %SIG);
 
 use Config::General;
 use Data::Dumper;
 use Getopt::Long;
 use Log::Log4perl;
 
+use Gazprom::DB;
+use Gazprom::Log::Parser;
+
 use constant THREADS_NUM => 5;
-use constant DATASET_SIZE => 1000;
+use constant DATASET_SIZE => 100;
 
-our %ENV, %SIG;
-
-# Determine home dir
 my $script_home_dir = $ENV{LOGPARSER_HOME} or
-    die("LOGPARSER_HOME env variable is not set");
-
+	die("LOGPARSER_HOME env variable is not set");
 
 # Initialize logger
 Log::Log4perl::init("$script_home_dir/etc/log4perl.conf");
@@ -72,11 +74,19 @@ foreach my $param (qw(db_host db_user db_password db_name)) {
 }
 
 # Check for input maillog file
-die("No input maillog file specified") if (scalar(@ARGV) == 0);
+die "No input maillog file specified" if (scalar(@ARGV) == 0);
 my $maillog_file = shift;
+
+# Init DB module
+Gazprom::DB->init(config => \%config);
 
 # Process input data
 $logger->info("Processing input data ...");
+Gazprom::Log::FileParser->parse_records(
+    config => \%config,
+    logger => $logger,
+    path => $maillog_file
+);
 
 # We are DONE
 $logger->info("DONE");
