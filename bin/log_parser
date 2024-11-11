@@ -12,17 +12,28 @@ use Log::Log4perl;
 use constant THREADS_NUM => 5;
 use constant DATASET_SIZE => 1000;
 
-our %ENV;
+our %ENV, %SIG;
 
 # Determine home dir
 my $script_home_dir = $ENV{LOGPARSER_HOME} or
-    script_fail("LOGPARSER_HOME env variable is not set");
+    die("LOGPARSER_HOME env variable is not set");
+
+
+# Initialize logger
+Log::Log4perl::init("$script_home_dir/etc/log4perl.conf");
+my $logger = Log::Log4perl->get_logger('gazprom.logparser');
+
+$logger->error("===> log_paser started");
+$logger->error("Home dir: $script_home_dir");
 
 # Read config file
-my $conf = Config::General->new("$script_home_dir/etc/logparser.conf");
+my $config_file = "$script_home_dir/etc/logparser.conf";
+$logger->info("Reading config file: $config_file");
+my $conf = Config::General->new($config_file);
 my %config = $conf->getall();
 
 # Get options and the input log file
+$logger->info("Parsing input parameters ...");
 my %options = ();
 GetOptions(\%options,
     'threads=i',
@@ -51,21 +62,29 @@ foreach my $option (grep('/^db_/', keys %options)) {
 # Validate config values
 foreach my $param (qw(threads dataset_size)) {
     unless (exists $config{'parser'}{$param}) {
-        script_fail("please provide a value for parser/$param or set it as --${param}");
+        die("please provide a value for parser/$param or set it as --${param}");
     }
 }
 foreach my $param (qw(db_host db_user db_password db_name)) {
     unless (exists $config{'database'}{$param}) {
-        script_fail("please provide a value for database/$param or set it as --${param}");
+        die("please provide a value for database/$param or set it as --${param}");
     }
 }
 
 # Check for input maillog file
-script_fail("No input maillog file specified") if (scalar(@ARGV) == 0);
+die("No input maillog file specified") if (scalar(@ARGV) == 0);
 my $maillog_file = shift;
 
+# Process input data
+$logger->info("Processing input data ...");
+
 # We are DONE
-script_success();
+$logger->info("DONE");
+
+# -----------------------------------------------------------------------------
+#
+# SUBROUTINES
+#
 
 sub print_usage {
     print << 'USAGE_INFO';
@@ -99,15 +118,19 @@ OPTIONS:
 USAGE_INFO
 }
 
-sub script_success {
-    print "DONE.\n";
-    exit(0);
-}
+# -----------------------------------------------------------------------------
+#
+# HANDLERS
+#
 
-sub script_fail {
-    my $error_msg = shift;
-    print "===> ERROR: $error_msg\n";
-    print_usage();
-    exit(1);
-}
+$SIG{__DIE__} = sub {
+    my $msg = shift;
+    $logger->error($msg);
+    die $msg;
+};
+
+$SIG{__WARN__} = sub {
+    my $msg = shift;
+    $logger->warn($msg);
+};
 
