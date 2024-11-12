@@ -1,4 +1,4 @@
-package Gazprom::Log::Parser;
+package Gazprom::Log::FileParser;
 # -----------------------------------------------------------------------------
 #
 # Gazprom::Log::Parser - simple sequential read log parser
@@ -15,9 +15,9 @@ use strict;
 use warnings;
 use utf8;
 
-use DBI;
 use IO::File;
 
+use Gazprom::DB;
 use Gazprom::Log::Record;
 
 sub parse_records {
@@ -30,6 +30,10 @@ sub parse_records {
 
     die "File not found: $datafile" unless (-e $datafile);
 
+    # Init DB and Record classes
+    Gazprom::DB->init(config => $config);
+    Gazprom::Log::Record->init(dbh => Gazprom::DB->get_connection());
+
     $logger->info("Parsing data file: $datafile");
     my $data_fh = IO::File->new($datafile, "r") or
         die "Cannot open file $datafile for reading";
@@ -40,7 +44,7 @@ sub parse_records {
         $rec_idx++;
         $logger->debug("Record Index: $rec_idx");
         $logger->debug(sprintf("Record Data: %s", $line));
-        my $log_rec = Gazprom::Log::Record->parse_rec($line);
+        my $log_rec = Gazprom::Log::Record->from_string($line);
         $log_rec->save();
     }
 
