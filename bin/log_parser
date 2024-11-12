@@ -12,8 +12,9 @@ use Data::Dumper;
 use Getopt::Long;
 use Log::Log4perl;
 
+use Gazprom::Config;
 use Gazprom::DB;
-use Gazprom::Log::Parser;
+use Gazprom::Log::FileParser;
 
 use constant THREADS_NUM => 5;
 use constant DATASET_SIZE => 100;
@@ -31,8 +32,7 @@ $logger->error("Home dir: $script_home_dir");
 # Read config file
 my $config_file = "$script_home_dir/etc/logparser.conf";
 $logger->info("Reading config file: $config_file");
-my $conf = Config::General->new($config_file);
-my %config = $conf->getall();
+my $config = Gazprom::Config->get_config($config_file);
 
 # Get options and the input log file
 $logger->info("Parsing input parameters ...");
@@ -42,6 +42,7 @@ GetOptions(\%options,
     'dataset_size=i',
     'help',
     'db_host=s',
+    'db_port=i',
     'db_user=s',
     'db_password=s',
     'db_name=s'
@@ -55,35 +56,23 @@ if ($options{help}) {
 
 # Override config values for any option provided
 foreach my $option (qw(threads dataset_size)) {
-    $config{'parser'}{$option} = $options{$option} if (exists $options{$option});
+    $config->{'parser'}{$option} = $options{$option} if (exists $options{$option});
 }
 foreach my $option (grep('/^db_/', keys %options)) {
-    $config{'database'}{$option} = $options{$option};
+    $config->{'database'}{$option} = $options{$option};
 }
 
 # Validate config values
-foreach my $param (qw(threads dataset_size)) {
-    unless (exists $config{'parser'}{$param}) {
-        die("please provide a value for parser/$param or set it as --${param}");
-    }
-}
-foreach my $param (qw(db_host db_user db_password db_name)) {
-    unless (exists $config{'database'}{$param}) {
-        die("please provide a value for database/$param or set it as --${param}");
-    }
-}
+Gazprom::Config->validate($config);
 
 # Check for input maillog file
 die "No input maillog file specified" if (scalar(@ARGV) == 0);
 my $maillog_file = shift;
 
-# Init DB module
-Gazprom::DB->init(config => \%config);
-
 # Process input data
 $logger->info("Processing input data ...");
 Gazprom::Log::FileParser->parse_records(
-    config => \%config,
+    config => $config,
     logger => $logger,
     path => $maillog_file
 );
