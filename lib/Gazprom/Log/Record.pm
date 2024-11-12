@@ -3,7 +3,9 @@ package Gazprom::Log::Record;
 use strict;
 use warnings;
 
-my $_DATA = {};
+my $_DATA = {
+    table => 'log'
+};
 
 sub init {
     my $pkg = shift;
@@ -15,9 +17,22 @@ sub init {
 
 sub from_string {
     my $pkg = shift;
-    my $data_str = shift or die "data_str is required";
+    my $string = shift or die "string is required";
 
+    my @rec = split(' ', $string, 4);
+    my $self = {
+        created_at => join(' ', @rec[0 .. 1]),
+        int_id => $rec[2],
+        str => join(' ', @rec[2 .. 3]),
+        address => ''
+    };
+    bless $self, $pkg;
+    return $self;
+}
 
+sub save {
+    my $self = shift;
+    die "Not implemented!";
 }
 
 1;
