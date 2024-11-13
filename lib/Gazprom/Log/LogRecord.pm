@@ -6,6 +6,8 @@ use warnings;
 use base qw(Gazprom::Log::Record);
 use Gazprom::Log::Record;
 
+use Try::Tiny;
+
 my $_DATA = {
     table => 'log'
 };
@@ -24,6 +26,28 @@ sub from_string {
     };
     bless $self, $pkg;
     return $self;
+}
+
+sub save {
+    my $self = shift;
+
+    my $dbh = Gazprom::Log::LogRecord->SUPER::get_db_connection();
+    my $table = $_DATA->{table};
+    my $sql = "INSERT INTO $table(created, int_id, str, address) VALUES (?, ?, ?, ?)";
+    try {
+        my $sth = $dbh->prepare($sql) or die $dbh->errstr();
+        $sth->execute(
+            $self->{created_at},
+            $self->{int_id},
+            $self->{str},
+            $self->{address}
+        ) or die $sth->errstr();
+    } catch {
+        $dbh->rollback();
+        die sprintf("Cannot insert record %s !!! Reason: %s",
+            $self->to_string(), $_);
+    };
+    $dbh->commit();
 }
 
 1;

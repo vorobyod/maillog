@@ -17,6 +17,11 @@ sub init {
     $_DATA->{dbh} = $params{dbh};
 }
 
+sub get_db_connection {
+    my $pkg = shift;
+    return $_DATA->{dbh};
+}
+
 sub flag_from_string {
     my $pkg = shift;
     my $line = shift or die "line is required";

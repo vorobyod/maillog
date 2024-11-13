@@ -17,6 +17,7 @@ use utf8;
 
 use Data::Dumper;
 use IO::File;
+use Try::Tiny;
 
 use Gazprom::DB;
 use Gazprom::Log::Record;
@@ -73,7 +74,12 @@ sub parse_records {
         $logger->info("Got $rec_class message");
         my $log_rec = $rec_class->from_string($line);
         $logger->debug($log_rec->to_string());
-        $log_rec->save();
+        try {
+            $log_rec->save();
+        } catch {
+            $logger->error("Error saving log record! Reason: $_");
+            $logger->error("Skipping ...");
+        };
     }
 
     $data_fh->close();
