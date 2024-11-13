@@ -3,9 +3,9 @@ package Gazprom::Log::Record;
 use strict;
 use warnings;
 
-my $_DATA = {
-    table => 'log'
-};
+use constant FLAG_FIELD_IDX => 3;
+
+my $_DATA = {};
 
 sub init {
     my $pkg = shift;
@@ -15,19 +15,17 @@ sub init {
     $_DATA->{dbh} = $params{dbh};
 }
 
+sub flag_from_string {
+    my $pkg = shift;
+    my $line = shift or die "line is required";
+
+    my @rec = split(' ', $line, 5);
+    return $rec[FLAG_FIELD_IDX];
+}
+
 sub from_string {
     my $pkg = shift;
-    my $string = shift or die "string is required";
-
-    my @rec = split(' ', $string, 4);
-    my $self = {
-        created_at => join(' ', @rec[0 .. 1]),
-        int_id => $rec[2],
-        str => join(' ', @rec[2 .. 3]),
-        address => ''
-    };
-    bless $self, $pkg;
-    return $self;
+    die "Not implemented!";
 }
 
 sub save {

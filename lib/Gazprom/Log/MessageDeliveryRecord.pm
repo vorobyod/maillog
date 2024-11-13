@@ -10,4 +10,11 @@ sub from_string {
     die "Not implemented";
 }
 
+sub match_flag {
+    my $pkg = shift;
+    my $flag = shift or die "flag required";
+
+    return ($flag eq '=>') ? 1 : 0;
+}
+
 1;

@@ -26,7 +26,13 @@ use Gazprom::Log::AdditionalAddressRecord;
 use Gazprom::Log::FailedDeliveryRecord;
 use Gazprom::Log::DelayedDeliveryRecord;
 
-use constant FLAG_FIELD_IDX => 3;
+my @log_record_classes = qw(
+    MessageRecord
+    MessageDeliveryRecord
+    AdditionalAddressRecord
+    FailedDeliveryRecord
+    DelayedDeliveryRecord
+);
 
 sub parse_records {
     my $pkg = shift;
@@ -54,26 +60,16 @@ sub parse_records {
         $logger->debug(sprintf("Record Data: %s", $line));
 
         # Let's look at what we got here, let's check if we got a flag field
-        my @rec = split(' ', $line, 5);
-        if ($rec[FLAG_FIELD_IDX]) {
-            my $class = '';
-            given($rec[FLAG_FIELD_IDX]) {
-                $class = 'MessageRecord' when /\<\=/;
-                $class = 'MessageDeliveryRecord' when /\=\>/;
-                $class = 'AdditionalAddressRecord' when /\-\>/;
-                $class = 'FailedDeliveryRecord' when /\*\*/;
-                $class = 'DelayedDeliveryRecord' when /\=\=/;
-                default {
-                    $logger->warn(sprintf("Bad flag! (%s)", $rec[FLAG_FILED_IDX]));
-                    continue;
-                }
-            }
+        my $rec_type_flag = Gazprom::Log::Record->flag_from_string($line);
+        my $rec_class = 'Gazprom::Log::InfoRecord';
+        foreach my $class (@log_record_classes) {
             $class = "Gazprom::Log::$class";
-            $log_rec = $class->from_string($line);
-
-        } else {
-            $log_rec = Gazprom::Log::Record->from_string($line);
+            if ($class->match_flag($rec_type_flag)) {
+                $rec_class = $class;
+                last;
+            }
         }
+        $log_rec = $class->from_string($line);
         $log_rec->save();
     }
 

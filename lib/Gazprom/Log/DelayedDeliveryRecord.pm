@@ -3,11 +3,14 @@ package Gazprom::Log::DelayedDeliveryRecord;
 use strict;
 use warnings;
 
-use base qw( Gazprom::Log::Record );
+use base qw( Gazprom::Log::LogRecord );
+use Gazprom::Log::LogRecord;
 
-sub from_string {
+sub match_flag {
     my $pkg = shift;
-    die "Not implemented";
+    my $flag = shift or die "flag required";
+
+    return ($flag eq '==') ? 1 : 0;
 }
 
 1;
