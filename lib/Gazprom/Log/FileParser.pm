@@ -20,6 +20,7 @@ use IO::File;
 
 use Gazprom::DB;
 use Gazprom::Log::Record;
+use Gazprom::Log::InfoRecord;
 use Gazprom::Log::MessageRecord;
 use Gazprom::Log::MessageDeliveryRecord;
 use Gazprom::Log::AdditionalAddressRecord;
@@ -62,14 +63,16 @@ sub parse_records {
         # Let's look at what we got here, let's check if we got a flag field
         my $rec_type_flag = Gazprom::Log::Record->flag_from_string($line);
         my $rec_class = 'Gazprom::Log::InfoRecord';
-        foreach my $class (@log_record_classes) {
-            $class = "Gazprom::Log::$class";
+        foreach my $class_name (@log_record_classes) {
+            my $class = "Gazprom::Log::$class_name";
             if ($class->match_flag($rec_type_flag)) {
                 $rec_class = $class;
                 last;
             }
         }
-        $log_rec = $class->from_string($line);
+        $logger->info("Got $rec_class message");
+        my $log_rec = $rec_class->from_string($line);
+        $logger->debug($log_rec->to_string());
         $log_rec->save();
     }
 

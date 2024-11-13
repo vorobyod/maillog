@@ -12,7 +12,7 @@ sub from_string {
 
     my $self = {};
 
-    if ($string =~ /:blackhole: \</) 
+    if ($string =~ /:blackhole: \</) {
         # Special parse case - blackhole mail router{
         my @rec = split(' ', $string, 7);
         my ($address) = $rec[5] =~ /\<(.*)\>/;
