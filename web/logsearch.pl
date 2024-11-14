@@ -19,7 +19,6 @@ Gazprom::DB->init(config => $config);
 my $dbh = Gazprom::DB->get_connection();
 
 get '/search' => sub ($c) {
-  my $address = $c->('address');
   $c->render(template => 'search_form', result => []);
 };
 
@@ -27,13 +26,13 @@ post '/search' => sub ($c) {
     my $address = $c->param('address');
 
     my $search_sql = "
-        SELECT created, str FROM message WHERE str ILIKE ?
+        SELECT int_id, created, str FROM message WHERE str ILIKE ?
         UNION
-        SELECT created, str FROM log WHERE address = ?
+        SELECT int_id, created, str FROM log WHERE address = ?
         ORDER BY int_id ASC, created ASC
     ";
 
-    my $count_sql = "SELECT COUNT(*) FROM ($search_sql)";
+    my $count_sql = "SELECT COUNT(*) FROM ($search_sql) AS search";
 
     # Let's count the result set
     my $query = $count_sql; 
@@ -56,9 +55,9 @@ post '/search' => sub ($c) {
         die "Cannot prepare $query !!! Resason: ".$dbh->errstr();
     $sth->execute('%'.$address.'%', $address) or
         die "Error executing $query !!! Reason: ". $dbh->errstr();
-    $result = $sth->fetchall_arrayref();
+    $result = $sth->fetchall_arrayref({});
     $c->render(template => 'search_form', result => $result);
-}
+};
  
 app->start;
 
@@ -78,8 +77,8 @@ __DATA__
 </tr>
 <% for my $row (@$result) { %>
 <tr>
-    <td><%= $row->[0] %></td>
-    <td><%= $row->[1] %></td>
+    <td><%= $row->{created} %></td>
+    <td><%= $row->{str} %></td>
 </tr>
 <% } %>
 </table>
