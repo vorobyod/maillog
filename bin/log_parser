@@ -7,8 +7,6 @@ use lib ($ENV{LOGPARSER_HOME}.'/lib');
 
 our(%ENV, %SIG);
 
-use Config::General;
-use Data::Dumper;
 use Getopt::Long;
 use Log::Log4perl;
 
